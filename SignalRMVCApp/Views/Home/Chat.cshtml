@@ -42,6 +42,7 @@
     <script>
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/chatHub")
+            .withAutomaticReconnect()
             .build();
 
         // Start the connection
