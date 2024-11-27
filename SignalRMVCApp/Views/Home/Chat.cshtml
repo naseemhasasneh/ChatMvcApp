@@ -1,0 +1,73 @@
+﻿
+@{
+    ViewData["Title"] = "Chat";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Room</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.4/signalr.min.js"></script>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4>SignalR Chat Room</h4>
+        </div>
+        <div class="card-body">
+            <form id="chatForm" class="mb-3">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <input type="text" id="user" class="form-control" placeholder="Your Name" required />
+                    </div>
+                    <div class="col-md-7">
+                        <input type="text" id="message" class="form-control" placeholder="Your Message" required />
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" id="sendButton" class="btn btn-primary w-100">Send</button>
+                    </div>
+                </div>
+            </form>
+            <ul id="messagesList" class="list-group">
+                @foreach (var msg in Model)
+                {
+                    <li class="list-group-item">
+                        <strong>@msg.User:</strong> @msg.Message <span class="text-muted">(@msg.Timestamp)</span>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chatHub")
+            .build();
+
+        // Start the connection
+        connection.start().then(() => console.log("Connected to SignalR"))
+            .catch(err => console.error("Error while starting connection:", err));
+
+        // Receive messages from the server
+        connection.on("ReceiveMessage", (user, message) => {
+            const li = document.createElement("li");
+            li.className = "list-group-item";
+            li.innerHTML = `<strong>${user}:</strong> ${message}`;
+            document.getElementById("messagesList").appendChild(li);
+        });
+
+        // Send messages to the server
+        document.getElementById("sendButton").addEventListener("click", () => {
+            const user = document.getElementById("user").value;
+            const message = document.getElementById("message").value;
+
+            if (user && message) {
+                connection.invoke("SendMessage", user, message)
+                    .catch(err => console.error("Error while sending message:", err));
+                document.getElementById("message").value = ''; // Clear the message input
+            }
+        });
+    </script>
+</body>
+</html>
+
